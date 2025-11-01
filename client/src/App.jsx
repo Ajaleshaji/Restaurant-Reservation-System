@@ -5,8 +5,8 @@ import AdminLogin from "./pages/AdminLogin";
 import UserSignup from "./pages/UserSignup";
 import AdminSignup from "./pages/AdminSignup";
 import UserDashboard from "./pages/UserDashboard";
+import RestaurantDetails from "./pages/RestaurantDetails";
 import AdminDashboard from "./pages/AdminDashboard";
-
 function App() {
   return (
     <Router>
@@ -17,6 +17,7 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/signup" element={<AdminSignup />} />
         <Route path="/user/dashboard" element={<UserDashboard />} />
+        <Route path="/admin/restaurant-details" element={<RestaurantDetails />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
     </Router>

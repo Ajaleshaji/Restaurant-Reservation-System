@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -11,11 +12,13 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-
-mongoose.connect(process.env.MONGO_URI)
+// connect to mongo (ensure MONGO_URI is defined in .env)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Atlas connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
+// mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurant", restaurantRoutes);
 

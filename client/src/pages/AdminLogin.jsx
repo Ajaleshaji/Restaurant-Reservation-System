@@ -15,10 +15,9 @@ const AdminLogin = () => {
         password,
       });
 
-      // ✅ Save token and redirect
       localStorage.setItem("adminToken", res.data.token);
       alert(res.data.message);
-      navigate("/admin/dashboard"); // Go straight to dashboard on login
+      navigate("/admin/dashboard");
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Login failed");
@@ -26,19 +25,19 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0F3C4C] to-[#1E607A]">
       <form
         onSubmit={handleLogin}
-        className="bg-white p-8 rounded-xl shadow-md w-96"
+        className="bg-white p-8 rounded-2xl shadow-2xl w-96 border border-gray-200"
       >
-        <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+        <h2 className="text-3xl font-semibold mb-6 text-center text-[#0F3C4C]">
           Admin Login
         </h2>
 
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-2 mb-4 border rounded-lg"
+          className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E607A]"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -47,7 +46,7 @@ const AdminLogin = () => {
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-2 mb-6 border rounded-lg"
+          className="w-full p-3 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E607A]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -55,13 +54,14 @@ const AdminLogin = () => {
 
         <button
           type="submit"
-          className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="w-full py-3 bg-[#E53935] text-white rounded-lg font-semibold hover:bg-[#C62828] transition-colors shadow-md"
         >
           Login
         </button>
-        <p className="text-center text-sm text-gray-600 mt-4">
-          Don't have an account?{" "}
-          <Link to="/admin/signup" className="text-green-600 hover:underline">
+
+        <p className="text-center text-sm text-gray-600 mt-5">
+          Don’t have an account?{" "}
+          <Link to="/admin/signup" className="text-[#1E607A] hover:underline font-medium">
             Sign Up
           </Link>
         </p>

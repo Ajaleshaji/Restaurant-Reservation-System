@@ -17,7 +17,6 @@ const AdminSignup = () => {
         password,
       });
 
-      // ✅ Save token and redirect
       localStorage.setItem("adminToken", res.data.token);
       alert(res.data.message);
       navigate("/admin/restaurant-details");
@@ -28,19 +27,19 @@ const AdminSignup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0F3C4C] to-[#1E607A]">
       <form
         onSubmit={handleSignup}
-        className="bg-white p-8 rounded-xl shadow-md w-96"
+        className="bg-white p-8 rounded-2xl shadow-2xl w-96 border border-gray-200"
       >
-        <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+        <h2 className="text-3xl font-semibold mb-6 text-center text-[#0F3C4C]">
           Admin Signup
         </h2>
 
         <input
           type="text"
           placeholder="Full Name"
-          className="w-full p-2 mb-4 border rounded-lg"
+          className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E607A]"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -49,7 +48,7 @@ const AdminSignup = () => {
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-2 mb-4 border rounded-lg"
+          className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E607A]"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -58,7 +57,7 @@ const AdminSignup = () => {
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-2 mb-6 border rounded-lg"
+          className="w-full p-3 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E607A]"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -66,13 +65,14 @@ const AdminSignup = () => {
 
         <button
           type="submit"
-          className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="w-full py-3 bg-[#E53935] text-white rounded-lg font-semibold hover:bg-[#C62828] transition-colors shadow-md"
         >
           Signup
         </button>
-        <p className="text-center text-sm text-gray-600 mt-4">
+
+        <p className="text-center text-sm text-gray-600 mt-5">
           Already have an account?{" "}
-          <Link to="/admin/login" className="text-green-600 hover:underline">
+          <Link to="/admin/login" className="text-[#1E607A] hover:underline font-medium">
             Login
           </Link>
         </p>

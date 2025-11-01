@@ -1,10 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const UserLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -13,37 +14,76 @@ const UserLogin = () => {
         email,
         password,
       });
-      console.log(res.data);
-      alert("Login successful!");
-      localStorage.setItem("token", res.data.token);
-      // navigate("/user/dashboard");
+
+      alert(res.data.message || "Login successful");
+      localStorage.setItem("userToken", res.data.token);
+     navigate("/user/dashboard");
+ // redirect to user home or dashboard
     } catch (err) {
-      console.log(err);
-      setError(err.response?.data?.message || "Login failed");
+      alert(err.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div>
-      <h2>User Login</h2>
-      <form onSubmit={handleLogin}>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        background: "linear-gradient(to right, #0F3C4C, #1E607A)",
+      }}
+    >
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded-2xl shadow-lg w-96"
+      >
+        <h2
+          className="text-2xl font-bold mb-6 text-center"
+          style={{ color: "#1E607A" }}
+        >
+          User Login
+        </h2>
+
         <input
           type="email"
-          placeholder="Enter Email"
-          value={email}
+          placeholder="Email"
+          className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2"
+          style={{ borderColor: "#ddd", focusRingColor: "#1E607A" }}
           onChange={(e) => setEmail(e.target.value)}
+          value={email}
           required
         />
+
         <input
           type="password"
-          placeholder="Enter Password"
-          value={password}
+          placeholder="Password"
+          className="w-full p-3 mb-6 border rounded-lg focus:outline-none focus:ring-2"
+          style={{ borderColor: "#ddd", focusRingColor: "#1E607A" }}
           onChange={(e) => setPassword(e.target.value)}
+          value={password}
           required
         />
-        <button type="submit">Login</button>
+
+        <button
+          className="w-full py-2 rounded-lg font-semibold text-white transition duration-200"
+          style={{
+            backgroundColor: "#E53935",
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#C62828")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#E53935")}
+        >
+          Login
+        </button>
+
+        <p className="text-center text-sm mt-4">
+          Don’t have an account?{" "}
+          <span
+            className="cursor-pointer font-medium"
+            style={{ color: "#1E607A" }}
+            onClick={() => navigate("/user/signup")}
+          >
+            Signup
+          </span>
+        </p>
       </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 };

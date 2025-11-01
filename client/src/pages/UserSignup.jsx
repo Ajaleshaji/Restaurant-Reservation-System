@@ -24,14 +24,28 @@ const UserSignup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleSignup} className="bg-white p-8 rounded-xl shadow-md w-96">
-        <h2 className="text-2xl font-semibold mb-6 text-center">User Signup</h2>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{
+        background: "linear-gradient(to right, #0F3C4C, #1E607A)",
+      }}
+    >
+      <form
+        onSubmit={handleSignup}
+        className="bg-white p-8 rounded-2xl shadow-lg w-96"
+      >
+        <h2
+          className="text-2xl font-bold mb-6 text-center"
+          style={{ color: "#1E607A" }}
+        >
+          User Signup
+        </h2>
 
         <input
           type="text"
           placeholder="Full Name"
-          className="w-full p-2 mb-4 border rounded-lg"
+          className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2"
+          style={{ borderColor: "#ddd", focusRingColor: "#1E607A" }}
           onChange={(e) => setName(e.target.value)}
           value={name}
           required
@@ -40,7 +54,8 @@ const UserSignup = () => {
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-2 mb-4 border rounded-lg"
+          className="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2"
+          style={{ borderColor: "#ddd", focusRingColor: "#1E607A" }}
           onChange={(e) => setEmail(e.target.value)}
           value={email}
           required
@@ -49,20 +64,29 @@ const UserSignup = () => {
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-2 mb-4 border rounded-lg"
+          className="w-full p-3 mb-6 border rounded-lg focus:outline-none focus:ring-2"
+          style={{ borderColor: "#ddd", focusRingColor: "#1E607A" }}
           onChange={(e) => setPassword(e.target.value)}
           value={password}
           required
         />
 
-        <button className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <button
+          className="w-full py-2 rounded-lg font-semibold text-white transition duration-200"
+          style={{
+            backgroundColor: "#E53935",
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#C62828")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#E53935")}
+        >
           Signup
         </button>
 
         <p className="text-center text-sm mt-4">
           Already have an account?{" "}
           <span
-            className="text-blue-600 cursor-pointer"
+            className="cursor-pointer font-medium"
+            style={{ color: "#1E607A" }}
             onClick={() => navigate("/user/login")}
           >
             Login

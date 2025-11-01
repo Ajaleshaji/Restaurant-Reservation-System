@@ -1,18 +1,19 @@
 import mongoose from "mongoose";
 
-const restaurantSchema = new mongoose.Schema({
-  adminId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Admin", // Assumes you have an "Admin" model
-    required: true,
-    unique: true, // Added unique: true, as one admin should only have one restaurant
-  },
-  restaurantName: { type: String, required: true },
-  location: { type: String, required: true },
-  openTime: { type: String, required: true },
-  closeTime: { type: String, required: true },
-  availableTables: { type: Number, required: true },
+const tableSchema = new mongoose.Schema({
+  number: Number,
+  isBooked: { type: Boolean, default: false },
+  bookedBy: { type: String, default: "" },
 });
 
-const Restaurant = mongoose.model("Restaurant", restaurantSchema);
-export default Restaurant;
+const restaurantSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", required: true },
+  restaurantName: String,
+  location: String,
+  openTime: String,
+  closeTime: String,
+  availableTables: Number,
+  tables: [tableSchema], // 👈 stores all table details
+});
+
+export default mongoose.model("Restaurant", restaurantSchema);

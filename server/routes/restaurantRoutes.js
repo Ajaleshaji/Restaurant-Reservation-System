@@ -1,5 +1,7 @@
 import express from "express";
+import nodemailer from "nodemailer";
 import Restaurant from "../models/restaurantModel.js";
+import User from "../models/User.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -94,6 +96,72 @@ router.get("/all", async (req, res) => {
 /* ------------------------------------------------------------
    ✅ Reserve a Table (User)
 ------------------------------------------------------------ */
+
+//mail service setup
+
+async function sendMail(user, tableNumber, userName, userPhone, reservationTime, restaurant) {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "oone03066@gmail.com", // Your Gmail
+      pass: "kjsljrpmobqeqytv",    // App password
+    },
+  });
+
+  const mailOptions = {
+    from: `"Reservations" <oone03066@gmail.com>`,
+    to: user.email,
+    subject: "🍽️ Your Table Reservation is Confirmed!",
+    text: `
+Hi ${userName},
+
+Your reservation at our restaurant has been successfully confirmed! 🎉
+
+📋 Reservation Details:
+- Restaurant: ${restaurant.restaurantName}
+- Location: ${restaurant.location}
+- Table Number: ${tableNumber}
+- Name: ${userName}
+- Phone: ${userPhone}
+- Reservation Time: ${reservationTime}
+
+We look forward to serving you and hope you have a wonderful dining experience.
+
+Warm regards,  
+Team Restaurant management  
+📧 oone03066@gmail.com
+    `,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #333; padding: 15px;">
+        <h2 style="color: #2e86de;">🍽️ Reservation Confirmed!</h2>
+        <p>Hi <b>${userName}</b>,</p>
+        <p>Your table reservation has been <b>successfully confirmed</b>!</p>
+        <table style="border-collapse: collapse; margin: 10px 0;">
+          <tr><td>🍽️ <b>Restaurant:</b></td><td>${restaurant.restaurantName}</td></tr>
+          <tr><td>📍 <b>Restaurant:</b></td><td>${restaurant.location}</td></tr>
+          <tr><td>📋 <b>Table Number:</b></td><td>${tableNumber}</td></tr>
+          <tr><td>👤 <b>Name:</b></td><td>${userName}</td></tr>
+          <tr><td>📞 <b>Phone:</b></td><td>${userPhone}</td></tr>
+          <tr><td>🕒 <b>Time:</b></td><td>${reservationTime}</td></tr>
+        </table>
+        <p>We look forward to serving you. Have a great time!</p>
+        <br/>
+        <p style="font-size: 13px; color: #888;">
+          — Team Restaurant management<br/>
+          📧 oone03066@gmail.com
+        </p>
+      </div>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent successfully:", info.response);
+  } catch (error) {
+    console.error("❌ Error sending email:", error);
+  }
+}
+
 router.post("/reserve/:id", verifyToken, async (req, res) => {
   try {
     const restaurantId = req.params.id;
@@ -105,6 +173,8 @@ router.post("/reserve/:id", verifyToken, async (req, res) => {
     }
 
     const restaurant = await Restaurant.findById(restaurantId);
+    const user = await User.findById(userId);
+    console.log(user)
     if (!restaurant)
       return res.status(404).json({ message: "Restaurant not found" });
 
@@ -128,6 +198,7 @@ router.post("/reserve/:id", verifyToken, async (req, res) => {
     console.log("📝 Booking table:", restaurant);
 
     await restaurant.save();
+    await sendMail(user, tableNumber, userName, userPhone, reservationTime, restaurant);
 
     res.status(200).json({ message: "✅ Table reserved successfully!" });
   } catch (err) {

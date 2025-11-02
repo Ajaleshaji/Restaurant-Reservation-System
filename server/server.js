@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin:"*"
+  origin: "*"
 }));
 
 // connect to mongo (ensure MONGO_URI is defined in .env)

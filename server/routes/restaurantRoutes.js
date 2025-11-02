@@ -6,9 +6,8 @@ const router = express.Router();
 
 /**
  * POST /api/restaurant/details
- * Save or update restaurant details for the logged-in admin.
+ * Save or update restaurant details (Admin only)
  */
-// Save or update restaurant details (admin)
 router.post("/details", verifyToken, async (req, res) => {
   try {
     const adminId = req.user?.id;
@@ -18,26 +17,31 @@ router.post("/details", verifyToken, async (req, res) => {
 
     let restaurant = await Restaurant.findOne({ adminId });
 
+    // Rebuild tables array safely
+    const createTablesArray = (count) =>
+      Array.from({ length: count }, (_, i) => ({
+        number: i + 1,
+        isBooked: false,
+        bookedBy: null, // ✅ null not ""
+        userName: "N/A",
+        userPhone: "N/A",
+        reservationTime: "N/A",
+      }));
+
     if (restaurant) {
-      // Update existing restaurant
       restaurant.restaurantName = restaurantName;
       restaurant.location = location;
       restaurant.openTime = openTime;
       restaurant.closeTime = closeTime;
 
-      // If the admin updates the number of tables, rebuild table list
+      // Rebuild if count changed
       if (restaurant.availableTables !== availableTables) {
         restaurant.availableTables = availableTables;
-        restaurant.tables = Array.from({ length: availableTables }, (_, i) => ({
-          number: i + 1,
-          isBooked: false,
-          bookedBy: "",
-        }));
+        restaurant.tables = createTablesArray(availableTables);
       }
 
       await restaurant.save();
     } else {
-      // Create new restaurant with generated tables
       restaurant = await Restaurant.create({
         adminId,
         restaurantName,
@@ -45,82 +49,101 @@ router.post("/details", verifyToken, async (req, res) => {
         openTime,
         closeTime,
         availableTables,
-        tables: Array.from({ length: availableTables }, (_, i) => ({
-          number: i + 1,
-          isBooked: false,
-          bookedBy: "",
-        })),
+        tables: createTablesArray(availableTables),
       });
     }
 
-    res.status(200).json({ message: "Restaurant saved successfully!", restaurant });
+    res.status(200).json({ message: "✅ Restaurant saved successfully!", restaurant });
   } catch (err) {
     console.error("❌ Error saving restaurant:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-
 /**
  * GET /api/restaurant/details
- * Fetch restaurant details for the logged-in admin
+ * Get restaurant details for admin
  */
 router.get("/details", verifyToken, async (req, res) => {
   try {
     const adminId = req.user?.id;
     const restaurant = await Restaurant.findOne({ adminId });
     if (!restaurant) return res.status(404).json({ message: "Not found" });
-
     res.status(200).json(restaurant);
   } catch (err) {
-    console.error("Error fetching details:", err);
+    console.error("❌ Error fetching details:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /**
  * GET /api/restaurant/all
- * Public route for users to view all restaurants
+ * Public route — List all restaurants for users
  */
 router.get("/all", async (req, res) => {
   try {
     const restaurants = await Restaurant.find().sort({ restaurantName: 1 });
     res.status(200).json(restaurants);
   } catch (err) {
-    console.error("Error fetching all restaurants:", err);
+    console.error("❌ Error fetching all restaurants:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 /**
  * POST /api/restaurant/reserve/:id
- * User reserves a specific table
+ * Reserve a table (User)
  */
-// Reserve a table (User)
-router.post("/reserve/:restaurantId", verifyToken, async (req, res) => {
+router.post("/reserve/:id", verifyToken, async (req, res) => {
   try {
-    const { restaurantId } = req.params;
-    const { tableNumber } = req.body;
+    const restaurantId = req.params.id;
     const userId = req.user?.id;
+    const { tableNumber, userName, userPhone, reservationTime } = req.body;
+
+    if (!tableNumber || !userName || !userPhone || !reservationTime) {
+      return res.status(400).json({ message: "Missing reservation details" });
+    }
 
     const restaurant = await Restaurant.findById(restaurantId);
-    if (!restaurant) return res.status(404).json({ message: "Restaurant not found" });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
 
-    const table = restaurant.tables.find((t) => t.number === tableNumber);
-    if (!table) return res.status(400).json({ message: "Invalid table number" });
-    if (table.isBooked)
-      return res.status(400).json({ message: "This table is already booked" });
+    const tableIndex = restaurant.tables.findIndex(
+      (t) => t.number === Number(tableNumber)
+    );
+    if (tableIndex === -1) {
+      return res.status(404).json({ message: "Table not found" });
+    }
 
-    // Mark table as booked
-    table.isBooked = true;
-    table.bookedBy = userId;
+    const table = restaurant.tables[tableIndex];
+    if (table.isBooked) {
+      return res.status(400).json({ message: "Table already booked" });
+    }
+
+    // ✅ Update booking details
+     restaurant.tables[tableIndex].isBooked = true;
+    restaurant.tables[tableIndex].bookedBy = userId;
+    restaurant.tables[tableIndex].userName = userName;
+    restaurant.tables[tableIndex].userPhone = userPhone;
+    restaurant.tables[tableIndex].reservationTime = reservationTime;
+
     await restaurant.save();
 
-    res.status(200).json({ message: `Table ${tableNumber} booked successfully!` });
+    res.status(200).json({ message: "✅ Table reserved successfully!" });
   } catch (err) {
-    console.error("❌ Error reserving table:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ Reservation error:", err);
+    res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
   }
 });
 
-export default router;
+// CANCEL TABLE BOOKING (User)
+// ✅ Get all bookings for the logged-in user
+
+
+
+
+export default router;  

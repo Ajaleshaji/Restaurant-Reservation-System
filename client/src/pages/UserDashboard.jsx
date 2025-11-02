@@ -1,13 +1,35 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { FaUserCircle } from "react-icons/fa";
 
 const UserDashboard = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeRestaurant, setActiveRestaurant] = useState(null); // For expanded view (reservation container)
+  const [activeRestaurant, setActiveRestaurant] = useState(null);
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ name: "", phone: "", time: "" });
+  const [user, setUser] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const token = localStorage.getItem("userToken");
 
-  // Fetch all restaurants
+  // ✅ Fetch user details from token or API
+ useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(res.data); // ✅ fixed
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+    }
+  };
+  if (token) fetchUser();
+}, [token]);
+
+
+  // ✅ Fetch all restaurants
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
@@ -22,99 +44,194 @@ const UserDashboard = () => {
     fetchRestaurants();
   }, []);
 
-  // Reserve a table
-  const handleReserve = async (restaurantId, tableNumber) => {
+  // ✅ Handle table click (open modal)
+  const handleTableClick = (restaurantId, tableNumber) => {
+    setSelectedTable({ restaurantId, tableNumber });
+    setShowModal(true);
+  };
+
+  // ✅ Submit reservation
+  const handleReservationSubmit = async (e) => {
+    e.preventDefault();
+    if (!token) return alert("Please log in first.");
+
     try {
+      const { restaurantId, tableNumber } = selectedTable;
       const res = await axios.post(
         `http://localhost:5000/api/restaurant/reserve/${restaurantId}`,
-        { tableNumber },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+          tableNumber,
+          userName: formData.name,
+          userPhone: formData.phone,
+          reservationTime: formData.time,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("✅ Table booked successfully!");
-      // Refresh restaurants after booking
-      const updated = await axios.get("http://localhost:5000/api/restaurant/all");
-      setRestaurants(updated.data);
-      setActiveRestaurant(null); // Close reservation view
+
+      alert(res.data.message);
+      setShowModal(false);
+      setFormData({ name: "", phone: "", time: "" });
+      setActiveRestaurant(null);
+
+      // Refresh restaurant data
+      const updatedRestaurants = await axios.get(
+        "http://localhost:5000/api/restaurant/all"
+      );
+      setRestaurants(updatedRestaurants.data);
     } catch (err) {
-      alert(err.response?.data?.message || "Booking failed");
+      console.error("Booking failed:", err);
+      alert(err.response?.data?.message || "Failed to book table");
     }
+  };
+
+  // ✅ Logout user
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    window.location.href = "/login";
   };
 
   return (
     <div
-      className="min-h-screen p-10"
+      className="min-h-screen p-8"
       style={{ background: "linear-gradient(to right, #0F3C4C, #1E607A)" }}
     >
-      <h2 className="text-3xl font-bold text-center mb-8 text-white">
+      {/* ✅ Navbar */}
+      <div className="flex justify-between items-center mb-10">
+        <h2 className="text-3xl font-bold text-white">
+          Restaurant Reservation System 🍴
+        </h2>
+
+        <div className="relative">
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-2 text-white text-lg"
+          >
+            <FaUserCircle className="text-3xl" />
+            {user ? user.name : "User"}
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-md w-40">
+              <div className="p-3 border-b text-gray-700">
+                <p className="font-semibold">{user?.name}</p>
+                <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white rounded-b-lg"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ✅ Explore Restaurants */}
+      <h2 className="text-2xl font-bold text-center mb-6 text-white">
         Explore Restaurants 🍽️
       </h2>
 
       {loading ? (
         <p className="text-center text-white">Loading...</p>
-      ) : restaurants.length === 0 ? (
-        <p className="text-center text-white">No restaurants available</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {restaurants.map((r) => (
             <div
               key={r._id}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition relative"
+              className="bg-white rounded-xl shadow-lg p-6 relative overflow-hidden"
             >
               <h3 className="text-xl font-semibold mb-2 text-[#1E607A]">
                 {r.restaurantName}
               </h3>
-              <p className="text-gray-700 mb-1">
-                <strong>📍 Location:</strong> {r.location}
+              <p className="text-gray-700">📍 {r.location}</p>
+              <p className="text-gray-700">
+                🕒 {r.openTime} - {r.closeTime}
               </p>
-              <p className="text-gray-700 mb-1">
-                <strong>🕒 Timings:</strong> {r.openTime} - {r.closeTime}
-              </p>
-              <p className="text-gray-700 mb-1">
-                <strong>🪑 Total Tables:</strong> {r.availableTables}
-              </p>
+              <p className="text-gray-700">🪑 {r.availableTables} tables</p>
 
-              <div className="mt-4 flex gap-3">
-                <button
-                  onClick={() =>
-                    setActiveRestaurant(activeRestaurant === r._id ? null : r._id)
-                  }
-                  className="px-3 py-2 bg-[#E53935] text-white rounded-md hover:bg-[#C62828] transition w-full"
-                >
-                  {activeRestaurant === r._id ? "Close" : "Reserve Table"}
-                </button>
-              </div>
+              <button
+                onClick={() =>
+                  setActiveRestaurant(activeRestaurant === r._id ? null : r._id)
+                }
+                className="mt-3 px-3 py-2 bg-[#E53935] text-white rounded-md w-full"
+              >
+                {activeRestaurant === r._id ? "Close" : "Reserve Table"}
+              </button>
 
-              {/* Reservation container */}
               {activeRestaurant === r._id && (
-                <div className="mt-6 bg-[#F5F8FA] rounded-xl p-4 border border-[#1E607A]/20">
-                  <h4 className="text-lg font-semibold text-[#1E607A] mb-3">
-                    Select a Table:
-                  </h4>
-                  <div className="grid grid-cols-4 gap-3">
-                    {r.tables?.length > 0 ? (
-                      r.tables.map((t) => (
+                <div className="mt-4 grid grid-cols-4 gap-3">
+                  {r.tables.map((t) => (
+                    <button
+                      key={t.number}
+                      disabled={t.isBooked}
+                      onClick={() => handleTableClick(r._id, t.number)}
+                      className={`rounded-lg py-2 font-semibold ${
+                        t.isBooked
+                          ? "bg-red-400 cursor-not-allowed"
+                          : "bg-green-500 hover:bg-green-600 text-white"
+                      }`}
+                    >
+                      {t.isBooked ? "Booked" : `Table ${t.number}`}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* ✅ Reservation Modal */}
+              {showModal && selectedTable?.restaurantId === r._id && (
+                <div className="absolute inset-0 bg-white bg-opacity-95 flex justify-center items-center">
+                  <div className="bg-white border border-gray-300 rounded-lg shadow-md p-5 w-[90%]">
+                    <h3 className="text-lg font-semibold text-[#1E607A] mb-4">
+                      Reservation Details
+                    </h3>
+                    <form onSubmit={handleReservationSubmit} className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        required
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Phone (10 digits)"
+                        pattern="[0-9]{10}"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        required
+                        className="w-full p-2 border rounded"
+                      />
+                      <input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) =>
+                          setFormData({ ...formData, time: e.target.value })
+                        }
+                        required
+                        className="w-full p-2 border rounded"
+                      />
+                      <div className="flex justify-end gap-2">
                         <button
-                          key={t.number}
-                          disabled={t.isBooked}
-                          onClick={() => handleReserve(r._id, t.number)}
-                          className={`rounded-lg py-2 font-semibold transition-all ${
-                            t.isBooked
-                              ? "bg-red-400 text-white cursor-not-allowed"
-                              : "bg-green-400 hover:bg-green-500 text-white"
-                          }`}
+                          type="button"
+                          onClick={() => setShowModal(false)}
+                          className="bg-gray-400 px-3 py-1 rounded text-white"
                         >
-                          {t.isBooked ? "Booked" : `Table ${t.number}`}
+                          Cancel
                         </button>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 col-span-4 text-center">
-                        No tables available yet.
-                      </p>
-                    )}
+                        <button
+                          type="submit"
+                          className="bg-[#1E607A] px-3 py-1 rounded text-white"
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               )}

@@ -5,7 +5,7 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-
+// ✅ Verify Token Middleware
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -22,8 +22,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-// ✅ New route: Get logged-in user info
-// Get logged-in user info (using token)
+// ✅ Get Logged-in User Info
 router.get("/me", async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -46,16 +45,28 @@ router.get("/me", async (req, res) => {
   }
 });
 
+// ✅ Password Strength Regex
+const strongPasswordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-
-
-// ✅ User Signup
+// ✅ User Signup with Strong Password Validation
 router.post("/user/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    // Check existing user
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: "User already exists" });
+    if (existing)
+      return res.status(400).json({ message: "User already exists" });
+
+    // Check password strength
+    
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters long and include one uppercase, one lowercase, one number, and one special character.",
+      });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
@@ -101,13 +112,21 @@ router.post("/user/login", async (req, res) => {
   }
 });
 
-// ✅ Admin Signup — FIXED to return token
+// ✅ Admin Signup
 router.post("/admin/signup", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: "Admin already exists" });
+    console.log(password)
+    // ✅ Apply same password strength check
+    if (!strongPasswordRegex.test(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters long and include one uppercase, one lowercase, one number, and one special character.",
+      });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     const admin = await User.create({
@@ -117,12 +136,10 @@ router.post("/admin/signup", async (req, res) => {
       role: "admin",
     });
 
-    // 🔹 Generate token right after signup
     const token = jwt.sign({ id: admin._id, role: "admin" }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
-    // 🔹 Send token so frontend can save it before moving to restaurant details page
     res.status(201).json({
       message: "Admin created successfully. Proceed to add restaurant details.",
       token,

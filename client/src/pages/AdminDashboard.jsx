@@ -8,7 +8,7 @@ const AdminDashboard = () => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const [message, setMessage] = useState(""); // ✅ for showing smooth messages
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -17,7 +17,6 @@ const AdminDashboard = () => {
     setTimeout(() => navigate("/admin/login"), 1000);
   };
 
-  // ✅ Fetch admin info
   const fetchAdmin = async () => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -25,7 +24,6 @@ const AdminDashboard = () => {
         navigate("/admin/login");
         return;
       }
-
       const res = await axios.get("http://localhost:5000/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -35,7 +33,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Fetch restaurant details
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
@@ -104,7 +101,9 @@ const AdminDashboard = () => {
       <div className="flex-1 p-10 overflow-y-auto relative">
         {/* Top Header with Admin Info */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Restaurant Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Restaurant Dashboard
+          </h1>
 
           {/* Admin Profile Section */}
           <div className="relative">
@@ -135,7 +134,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Smooth Feedback Message */}
         {message && (
           <div className="mb-6 p-3 bg-blue-100 text-blue-800 rounded-md text-center font-medium shadow-sm">
             {message}
@@ -146,6 +144,7 @@ const AdminDashboard = () => {
         <h1 className="text-2xl font-semibold text-gray-800 mb-6">
           Restaurant Tables
         </h1>
+
         {loading ? (
           <p>Loading tables...</p>
         ) : restaurant ? (
@@ -153,22 +152,27 @@ const AdminDashboard = () => {
             {restaurant.tables?.map((table) => (
               <div
                 key={table.number}
-                className={`p-6 rounded-2xl text-center shadow-xl transition-all duration-300 ${
+                className={`p-5 rounded-2xl text-center shadow-xl transition-all duration-300 flex flex-col justify-center ${
                   table.isBooked ? "bg-red-200" : "bg-green-200"
                 }`}
+                style={{
+                  minHeight: table.isBooked ? "150px" : "100px", // 👈 Booked tables are taller
+                  maxHeight: table.isBooked ? "220px" : "130px",
+                }}
               >
                 <h3 className="text-xl font-semibold mb-2 text-gray-800">
                   Table {table.number}
                 </h3>
+
                 {table.isBooked ? (
-                  <div className="text-gray-700">
-                    <p className="font-semibold mb-2">Booked By:</p>
+                  <div className="text-gray-700 text-sm space-y-1 overflow-hidden">
+                    <p className="font-semibold">Booked By:</p>
                     <p>👤 {table.userName}</p>
                     <p>📞 {table.userPhone}</p>
                     <p>🕒 {table.reservationTime}</p>
                   </div>
                 ) : (
-                  <p className="text-gray-700">Available ✅</p>
+                  <p className="text-gray-700 text-base">Available ✅</p>
                 )}
               </div>
             ))}

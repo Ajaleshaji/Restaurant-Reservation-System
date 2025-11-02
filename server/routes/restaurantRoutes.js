@@ -4,10 +4,9 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-/**
- * POST /api/restaurant/details
- * Save or update restaurant details (Admin only)
- */
+/* ------------------------------------------------------------
+   ✅ Add or Update Restaurant Details (Admin Only)
+------------------------------------------------------------ */
 router.post("/details", verifyToken, async (req, res) => {
   try {
     const adminId = req.user?.id;
@@ -17,24 +16,24 @@ router.post("/details", verifyToken, async (req, res) => {
 
     let restaurant = await Restaurant.findOne({ adminId });
 
-    // Rebuild tables array safely
+    // Helper to rebuild tables array
     const createTablesArray = (count) =>
       Array.from({ length: count }, (_, i) => ({
         number: i + 1,
         isBooked: false,
-        bookedBy: null, // ✅ null not ""
+        userId: null,
         userName: "N/A",
         userPhone: "N/A",
         reservationTime: "N/A",
       }));
 
     if (restaurant) {
+      // Update existing details
       restaurant.restaurantName = restaurantName;
       restaurant.location = location;
       restaurant.openTime = openTime;
       restaurant.closeTime = closeTime;
 
-      // Rebuild if count changed
       if (restaurant.availableTables !== availableTables) {
         restaurant.availableTables = availableTables;
         restaurant.tables = createTablesArray(availableTables);
@@ -42,6 +41,7 @@ router.post("/details", verifyToken, async (req, res) => {
 
       await restaurant.save();
     } else {
+      // Create new restaurant
       restaurant = await Restaurant.create({
         adminId,
         restaurantName,
@@ -60,26 +60,27 @@ router.post("/details", verifyToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/restaurant/details
- * Get restaurant details for admin
- */
+/* ------------------------------------------------------------
+   ✅ Get Restaurant Details (Admin)
+------------------------------------------------------------ */
 router.get("/details", verifyToken, async (req, res) => {
   try {
     const adminId = req.user?.id;
     const restaurant = await Restaurant.findOne({ adminId });
-    if (!restaurant) return res.status(404).json({ message: "Not found" });
+
+    if (!restaurant)
+      return res.status(404).json({ message: "Restaurant not found" });
+
     res.status(200).json(restaurant);
   } catch (err) {
-    console.error("❌ Error fetching details:", err);
+    console.error("❌ Error fetching restaurant:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-/**
- * GET /api/restaurant/all
- * Public route — List all restaurants for users
- */
+/* ------------------------------------------------------------
+   ✅ Get All Restaurants (Public)
+------------------------------------------------------------ */
 router.get("/all", async (req, res) => {
   try {
     const restaurants = await Restaurant.find().sort({ restaurantName: 1 });
@@ -90,10 +91,9 @@ router.get("/all", async (req, res) => {
   }
 });
 
-/**
- * POST /api/restaurant/reserve/:id
- * Reserve a table (User)
- */
+/* ------------------------------------------------------------
+   ✅ Reserve a Table (User)
+------------------------------------------------------------ */
 router.post("/reserve/:id", verifyToken, async (req, res) => {
   try {
     const restaurantId = req.params.id;
@@ -105,45 +105,112 @@ router.post("/reserve/:id", verifyToken, async (req, res) => {
     }
 
     const restaurant = await Restaurant.findById(restaurantId);
-    if (!restaurant) {
+    if (!restaurant)
       return res.status(404).json({ message: "Restaurant not found" });
-    }
 
     const tableIndex = restaurant.tables.findIndex(
       (t) => t.number === Number(tableNumber)
     );
-    if (tableIndex === -1) {
+
+    if (tableIndex === -1)
       return res.status(404).json({ message: "Table not found" });
-    }
 
-    const table = restaurant.tables[tableIndex];
-    if (table.isBooked) {
+    if (restaurant.tables[tableIndex].isBooked)
       return res.status(400).json({ message: "Table already booked" });
-    }
 
-    // ✅ Update booking details
-     restaurant.tables[tableIndex].isBooked = true;
+    // ✅ Book table
+    restaurant.tables[tableIndex].isBooked = true;
     restaurant.tables[tableIndex].bookedBy = userId;
     restaurant.tables[tableIndex].userName = userName;
     restaurant.tables[tableIndex].userPhone = userPhone;
     restaurant.tables[tableIndex].reservationTime = reservationTime;
+
+    console.log("📝 Booking table:", restaurant);
 
     await restaurant.save();
 
     res.status(200).json({ message: "✅ Table reserved successfully!" });
   } catch (err) {
     console.error("❌ Reservation error:", err);
-    res.status(500).json({
-      message: "Internal server error",
-      error: err.message,
-    });
+    res.status(500).json({ message: "Internal server error", error: err.message });
   }
 });
 
-// CANCEL TABLE BOOKING (User)
-// ✅ Get all bookings for the logged-in user
+/* ------------------------------------------------------------
+   ✅ Get User’s Bookings
+------------------------------------------------------------ */
+router.get("/mybookings", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const restaurants = await Restaurant.find({ "tables.bookedBy": userId });
+
+    const myBookings = [];
+
+    restaurants.forEach((restaurant) => {
+      restaurant.tables.forEach((table) => {
+        if (table.bookedBy?.toString() === userId) {
+          myBookings.push({
+            bookingId: `${restaurant._id}_${table.number}`, // unique ID
+            restaurantId: restaurant._id,
+            restaurantName: restaurant.restaurantName,
+            restaurantLocation: restaurant.location,
+            tableNumber: table.number,
+            reservationTime: table.reservationTime,
+          });
+        }
+      });
+    });
+
+    res.status(200).json(myBookings);
+  } catch (err) {
+    console.error("❌ Error fetching bookings:", err);
+    res.status(500).json({ message: "Failed to fetch bookings" });
+  }
+});
+
+
+/* ------------------------------------------------------------
+   ✅ Cancel a Reservation (User)
+------------------------------------------------------------ */
+/* ------------------------------------------------------------
+   ✅ Cancel a Reservation (User)
+------------------------------------------------------------ */
+router.delete("/cancel/:bookingId", verifyToken, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const userId = req.user.id;
+
+    // Extract restaurantId and tableNumber from bookingId
+    const [restaurantId, tableNumberStr] = bookingId.split("_");
+    const tableNumber = parseInt(tableNumberStr);
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) return res.status(404).json({ message: "Restaurant not found" });
+
+    const table = restaurant.tables.find((t) => t.number === tableNumber);
+    if (!table) return res.status(404).json({ message: "Table not found" });
+
+    if (!table.isBooked || table.bookedBy?.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only cancel your own reservations" });
+    }
+
+    // Reset booking details
+    table.isBooked = false;
+    table.bookedBy = null;
+    table.userName = "N/A";
+    table.userPhone = "N/A";
+    table.reservationTime = "N/A";
+
+    await restaurant.save();
+
+    res.status(200).json({ message: "✅ Reservation cancelled successfully!" });
+  } catch (err) {
+    console.error("❌ Error cancelling booking:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 
-
-export default router;  
+export default router;

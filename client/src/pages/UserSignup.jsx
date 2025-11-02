@@ -6,20 +6,26 @@ const UserSignup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState(""); // ✅ inline feedback message
+  const [error, setError] = useState("");     // ✅ inline error message
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setError("");
+
     try {
       const res = await axios.post("http://localhost:5000/api/auth/user/signup", {
         name,
         email,
         password,
       });
-      alert(res.data.message || "Signup successful");
-      navigate("/user/login");
+
+      setMessage(res.data.message || "Signup successful! Redirecting...");
+      setTimeout(() => navigate("/user/login"), 1500);
     } catch (err) {
-      alert(err.response?.data?.message || "Signup failed");
+      setError(err.response?.data?.message || "Signup failed. Please try again.");
     }
   };
 
@@ -72,6 +78,7 @@ const UserSignup = () => {
         />
 
         <button
+          type="submit"
           className="w-full py-2 rounded-lg font-semibold text-white transition duration-200"
           style={{
             backgroundColor: "#E53935",
@@ -81,6 +88,14 @@ const UserSignup = () => {
         >
           Signup
         </button>
+
+        {/* ✅ Inline Success & Error Messages */}
+        {message && (
+          <p className="text-green-600 text-center mt-4 text-sm">{message}</p>
+        )}
+        {error && (
+          <p className="text-red-600 text-center mt-4 text-sm">{error}</p>
+        )}
 
         <p className="text-center text-sm mt-4">
           Already have an account?{" "}

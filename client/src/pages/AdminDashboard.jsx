@@ -8,12 +8,13 @@ const AdminDashboard = () => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  const [message, setMessage] = useState(""); // ✅ for showing smooth messages
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
-    alert("Logged out successfully.");
-    navigate("/admin/login");
+    setMessage("Logged out successfully. Redirecting...");
+    setTimeout(() => navigate("/admin/login"), 1000);
   };
 
   // ✅ Fetch admin info
@@ -50,8 +51,8 @@ const AdminDashboard = () => {
         setRestaurant(res.data);
       } catch (err) {
         if (err.response?.status === 404) {
-          alert("Please add your restaurant details first.");
-          navigate("/admin/restaurant-details");
+          setMessage("Please add your restaurant details first...");
+          setTimeout(() => navigate("/admin/restaurant-details"), 1500);
         } else {
           console.error("Error fetching details:", err);
         }
@@ -81,7 +82,9 @@ const AdminDashboard = () => {
 
             <div className="bg-white/10 p-6 rounded-2xl text-left space-y-4 shadow-lg">
               <p>📍 {restaurant.location}</p>
-              <p>🕒 {restaurant.openTime} - {restaurant.closeTime}</p>
+              <p>
+                🕒 {restaurant.openTime} - {restaurant.closeTime}
+              </p>
               <p>🪑 Total Tables: {restaurant.availableTables}</p>
             </div>
 
@@ -131,6 +134,13 @@ const AdminDashboard = () => {
             )}
           </div>
         </div>
+
+        {/* Smooth Feedback Message */}
+        {message && (
+          <div className="mb-6 p-3 bg-blue-100 text-blue-800 rounded-md text-center font-medium shadow-sm">
+            {message}
+          </div>
+        )}
 
         {/* TABLE STATUS */}
         <h1 className="text-2xl font-semibold text-gray-800 mb-6">

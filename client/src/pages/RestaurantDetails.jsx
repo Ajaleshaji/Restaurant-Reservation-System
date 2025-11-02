@@ -8,6 +8,8 @@ const RestaurantDetails = () => {
   const [openTime, setOpenTime] = useState("");
   const [closeTime, setCloseTime] = useState("");
   const [availableTables, setAvailableTables] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   // ✅ Fetch existing restaurant details (if any)
@@ -40,8 +42,9 @@ const RestaurantDetails = () => {
     e.preventDefault();
     const token = localStorage.getItem("adminToken");
     if (!token) {
-      alert("You must be logged in as admin first!");
-      navigate("/admin/login");
+      setError("You must be logged in as admin first!");
+      setMessage("");
+      setTimeout(() => navigate("/admin/login"), 2000);
       return;
     }
 
@@ -52,14 +55,18 @@ const RestaurantDetails = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(res.data?.message || "Restaurant details saved!");
+      setMessage(res.data?.message || "Restaurant details saved successfully!");
+      setError("");
 
-      // ✅ After saving, log out and go to login
-      localStorage.removeItem("adminToken");
-      navigate("/admin/login");
+      // ✅ After saving, log out and redirect after short delay
+      setTimeout(() => {
+        localStorage.removeItem("adminToken");
+        navigate("/admin/login");
+      }, 2000);
     } catch (err) {
       console.error("Error saving restaurant details:", err);
-      alert(err.response?.data?.message || "Failed to save restaurant details.");
+      setError(err.response?.data?.message || "Failed to save restaurant details.");
+      setMessage("");
     }
   };
 
@@ -72,6 +79,18 @@ const RestaurantDetails = () => {
         <h2 className="text-3xl font-semibold mb-6 text-center text-[#0F3C4C]">
           Restaurant Details
         </h2>
+
+        {/* ✅ Success/Error Message */}
+        {message && (
+          <div className="mb-4 text-green-600 font-medium text-center bg-green-100 p-2 rounded-lg">
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 text-red-600 font-medium text-center bg-red-100 p-2 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <input
           type="text"

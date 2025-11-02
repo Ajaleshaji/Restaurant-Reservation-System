@@ -5,10 +5,15 @@ import { useNavigate, Link } from "react-router-dom";
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+
     try {
       const res = await axios.post("http://localhost:5000/api/auth/admin/login", {
         email,
@@ -16,11 +21,11 @@ const AdminLogin = () => {
       });
 
       localStorage.setItem("adminToken", res.data.token);
-      alert(res.data.message);
-      navigate("/admin/dashboard");
+      setSuccess("Login successful! Redirecting...");
+      setTimeout(() => navigate("/admin/dashboard"), 1000);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     }
   };
 
@@ -59,9 +64,20 @@ const AdminLogin = () => {
           Login
         </button>
 
+        {/* ✅ Success or error messages */}
+        {success && (
+          <p className="text-green-600 text-center mt-4 font-medium">{success}</p>
+        )}
+        {error && (
+          <p className="text-red-600 text-center mt-4 font-medium">{error}</p>
+        )}
+
         <p className="text-center text-sm text-gray-600 mt-5">
           Don’t have an account?{" "}
-          <Link to="/admin/signup" className="text-[#1E607A] hover:underline font-medium">
+          <Link
+            to="/admin/signup"
+            className="text-[#1E607A] hover:underline font-medium"
+          >
             Sign Up
           </Link>
         </p>

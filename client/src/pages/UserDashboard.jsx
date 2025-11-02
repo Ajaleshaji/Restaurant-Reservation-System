@@ -11,23 +11,24 @@ const UserDashboard = () => {
   const [formData, setFormData] = useState({ name: "", phone: "", time: "" });
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const token = localStorage.getItem("userToken");
 
-  // ✅ Fetch user details from token or API
- useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser(res.data); // ✅ fixed
-    } catch (err) {
-      console.error("Error fetching user info:", err);
-    }
-  };
-  if (token) fetchUser();
-}, [token]);
-
+  // ✅ Fetch user details
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+      } catch (err) {
+        console.error("Error fetching user info:", err);
+      }
+    };
+    if (token) fetchUser();
+  }, [token]);
 
   // ✅ Fetch all restaurants
   useEffect(() => {
@@ -48,12 +49,17 @@ const UserDashboard = () => {
   const handleTableClick = (restaurantId, tableNumber) => {
     setSelectedTable({ restaurantId, tableNumber });
     setShowModal(true);
+    setMessage("");
+    setError("");
   };
 
   // ✅ Submit reservation
   const handleReservationSubmit = async (e) => {
     e.preventDefault();
-    if (!token) return alert("Please log in first.");
+    if (!token) {
+      setError("Please log in first.");
+      return;
+    }
 
     try {
       const { restaurantId, tableNumber } = selectedTable;
@@ -68,10 +74,13 @@ const UserDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(res.data.message);
-      setShowModal(false);
-      setFormData({ name: "", phone: "", time: "" });
-      setActiveRestaurant(null);
+      setMessage(res.data.message || "Reservation successful!");
+      setError("");
+      setTimeout(() => {
+        setShowModal(false);
+        setFormData({ name: "", phone: "", time: "" });
+        setActiveRestaurant(null);
+      }, 1500);
 
       // Refresh restaurant data
       const updatedRestaurants = await axios.get(
@@ -80,7 +89,8 @@ const UserDashboard = () => {
       setRestaurants(updatedRestaurants.data);
     } catch (err) {
       console.error("Booking failed:", err);
-      alert(err.response?.data?.message || "Failed to book table");
+      setError(err.response?.data?.message || "Failed to book table.");
+      setMessage("");
     }
   };
 
@@ -185,6 +195,19 @@ const UserDashboard = () => {
                     <h3 className="text-lg font-semibold text-[#1E607A] mb-4">
                       Reservation Details
                     </h3>
+
+                    {/* ✅ Feedback Messages */}
+                    {message && (
+                      <p className="text-green-600 text-sm mb-2 text-center">
+                        {message}
+                      </p>
+                    )}
+                    {error && (
+                      <p className="text-red-600 text-sm mb-2 text-center">
+                        {error}
+                      </p>
+                    )}
+
                     <form onSubmit={handleReservationSubmit} className="space-y-3">
                       <input
                         type="text"

@@ -5,22 +5,28 @@ import { useNavigate } from "react-router-dom";
 const UserLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState(""); // ✅ success message
+  const [error, setError] = useState("");     // ✅ error message
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setError("");
+
     try {
       const res = await axios.post("http://localhost:5000/api/auth/user/login", {
         email,
         password,
       });
 
-      alert(res.data.message || "Login successful");
+      setMessage(res.data.message || "Login successful! Redirecting...");
       localStorage.setItem("userToken", res.data.token);
-     navigate("/user/dashboard");
- // redirect to user home or dashboard
+
+      // Redirect after short delay
+      setTimeout(() => navigate("/user/dashboard"), 1500);
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     }
   };
 
@@ -63,6 +69,7 @@ const UserLogin = () => {
         />
 
         <button
+          type="submit"
           className="w-full py-2 rounded-lg font-semibold text-white transition duration-200"
           style={{
             backgroundColor: "#E53935",
@@ -72,6 +79,14 @@ const UserLogin = () => {
         >
           Login
         </button>
+
+        {/* ✅ Inline Feedback Messages */}
+        {message && (
+          <p className="text-green-600 text-center mt-4 text-sm">{message}</p>
+        )}
+        {error && (
+          <p className="text-red-600 text-center mt-4 text-sm">{error}</p>
+        )}
 
         <p className="text-center text-sm mt-4">
           Don’t have an account?{" "}

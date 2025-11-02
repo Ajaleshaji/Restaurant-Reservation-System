@@ -6,10 +6,15 @@ const AdminSignup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setError("");
+
     try {
       const res = await axios.post("http://localhost:5000/api/auth/admin/signup", {
         name,
@@ -18,11 +23,15 @@ const AdminSignup = () => {
       });
 
       localStorage.setItem("adminToken", res.data.token);
-      alert(res.data.message);
-      navigate("/admin/restaurant-details");
+      setMessage(res.data.message || "Signup successful!");
+      setError("");
+
+      // ✅ Redirect to restaurant details after short delay
+      setTimeout(() => navigate("/admin/restaurant-details"), 2000);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Signup failed");
+      setError(err.response?.data?.message || "Signup failed");
+      setMessage("");
     }
   };
 
@@ -35,6 +44,18 @@ const AdminSignup = () => {
         <h2 className="text-3xl font-semibold mb-6 text-center text-[#0F3C4C]">
           Admin Signup
         </h2>
+
+        {/* ✅ Success/Error Messages */}
+        {message && (
+          <div className="mb-4 text-green-600 font-medium text-center bg-green-100 p-2 rounded-lg">
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 text-red-600 font-medium text-center bg-red-100 p-2 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <input
           type="text"
@@ -72,7 +93,10 @@ const AdminSignup = () => {
 
         <p className="text-center text-sm text-gray-600 mt-5">
           Already have an account?{" "}
-          <Link to="/admin/login" className="text-[#1E607A] hover:underline font-medium">
+          <Link
+            to="/admin/login"
+            className="text-[#1E607A] hover:underline font-medium"
+          >
             Login
           </Link>
         </p>

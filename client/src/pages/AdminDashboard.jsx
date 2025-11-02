@@ -11,15 +11,18 @@ const AdminDashboard = () => {
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
+  const token = localStorage.getItem("adminToken");
+
+  // ✅ Logout
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     setMessage("Logged out successfully. Redirecting...");
     setTimeout(() => navigate("/admin/login"), 1000);
   };
 
+  // ✅ Fetch Admin Info
   const fetchAdmin = async () => {
     try {
-      const token = localStorage.getItem("adminToken");
       if (!token) {
         navigate("/admin/login");
         return;
@@ -33,31 +36,49 @@ const AdminDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchRestaurant = async () => {
-      try {
-        const token = localStorage.getItem("adminToken");
-        if (!token) {
-          navigate("/admin/login");
-          return;
-        }
-
-        const res = await axios.get("http://localhost:5000/api/restaurant/details", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setRestaurant(res.data);
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setMessage("Please add your restaurant details first...");
-          setTimeout(() => navigate("/admin/restaurant-details"), 1500);
-        } else {
-          console.error("Error fetching details:", err);
-        }
-      } finally {
-        setLoading(false);
+  // ✅ Fetch Restaurant Details
+  const fetchRestaurant = async () => {
+    try {
+      if (!token) {
+        navigate("/admin/login");
+        return;
       }
-    };
 
+      const res = await axios.get("http://localhost:5000/api/restaurant/details", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRestaurant(res.data);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setMessage("Please add your restaurant details first...");
+        setTimeout(() => navigate("/admin/restaurant-details"), 1500);
+      } else {
+        console.error("Error fetching details:", err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Remove Booking (Admin)
+  const handleRemoveBooking = async (restaurantId, tableNumber) => {
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/api/restaurant/remove-booking/${restaurantId}/${tableNumber}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setMessage(res.data.message);
+      fetchRestaurant(); // Refresh restaurant data after removal
+    } catch (err) {
+      console.error("Error removing booking:", err);
+      setMessage(err.response?.data?.message || "Failed to remove booking");
+    }
+  };
+
+  useEffect(() => {
     fetchAdmin();
     fetchRestaurant();
   }, [navigate]);
@@ -99,7 +120,7 @@ const AdminDashboard = () => {
 
       {/* RIGHT PANEL */}
       <div className="flex-1 p-10 overflow-y-auto relative">
-        {/* Top Header with Admin Info */}
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
             Restaurant Dashboard
@@ -117,7 +138,6 @@ const AdminDashboard = () => {
               </span>
             </div>
 
-            {/* Dropdown Menu (Email + Logout) */}
             {showMenu && (
               <div className="absolute right-0 mt-3 bg-white rounded-lg shadow-md w-48 py-2 z-50">
                 <p className="px-4 py-2 text-gray-700 text-sm border-b">
@@ -156,8 +176,8 @@ const AdminDashboard = () => {
                   table.isBooked ? "bg-red-200" : "bg-green-200"
                 }`}
                 style={{
-                  minHeight: table.isBooked ? "150px" : "100px", // 👈 Booked tables are taller
-                  maxHeight: table.isBooked ? "220px" : "130px",
+                  minHeight: table.isBooked ? "180px" : "100px",
+                  maxHeight: table.isBooked ? "240px" : "130px",
                 }}
               >
                 <h3 className="text-xl font-semibold mb-2 text-gray-800">
@@ -170,6 +190,15 @@ const AdminDashboard = () => {
                     <p>👤 {table.userName}</p>
                     <p>📞 {table.userPhone}</p>
                     <p>🕒 {table.reservationTime}</p>
+
+                    <button
+                      onClick={() =>
+                        handleRemoveBooking(restaurant._id, table.number)
+                      }
+                      className="mt-3 w-full py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
+                    >
+                      Remove Booking
+                    </button>
                   </div>
                 ) : (
                   <p className="text-gray-700 text-base">Available ✅</p>

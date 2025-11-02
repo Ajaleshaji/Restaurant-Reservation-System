@@ -212,5 +212,46 @@ router.delete("/cancel/:bookingId", verifyToken, async (req, res) => {
 });
 
 
+/* ------------------------------------------------------------
+   ✅ Admin Remove Booking (Mark Table as Available)
+------------------------------------------------------------ */
+router.put("/remove-booking/:restaurantId/:tableNumber", async (req, res) => {
+  try {
+    const { restaurantId, tableNumber } = req.params;
+
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    const table = restaurant.tables.find(
+      (t) => t.number === parseInt(tableNumber)
+    );
+    if (!table) {
+      return res.status(404).json({ message: "Table not found" });
+    }
+
+    if (!table.isBooked) {
+      return res
+        .status(400)
+        .json({ message: "Table is already available" });
+    }
+
+    // Reset booking fields
+    table.isBooked = false;
+    table.bookedBy = null;
+    table.userName = "N/A";
+    table.userPhone = "N/A";
+    table.reservationTime = "N/A";
+
+    await restaurant.save();
+
+    res.status(200).json({ message: "✅ Table is now available" });
+  } catch (err) {
+    console.error("❌ Error removing booking:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 export default router;

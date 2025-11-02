@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaUserCircle } from "react-icons/fa";
+import { FaUserCircle, FaMapMarkerAlt, FaClock, FaChair, FaUser, FaPhone, FaCalendarTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -9,6 +9,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [message, setMessage] = useState("");
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
   const navigate = useNavigate();
 
   const token = localStorage.getItem("adminToken");
@@ -60,18 +62,27 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ Remove Booking (Admin)
-  const handleRemoveBooking = async (restaurantId, tableNumber) => {
+  // ✅ Open Confirmation Popup
+  const openRemovePopup = (table) => {
+    setSelectedTable(table);
+    setPopupVisible(true);
+  };
+
+  // ✅ Confirm Remove Booking
+  const confirmRemoveBooking = async () => {
+    if (!selectedTable) return;
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/restaurant/remove-booking/${restaurantId}/${tableNumber}`,
+        `http://localhost:5000/api/restaurant/remove-booking/${restaurant._id}/${selectedTable.number}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       setMessage(res.data.message);
-      fetchRestaurant(); // Refresh restaurant data after removal
+      fetchRestaurant();
+      setPopupVisible(false);
+      setSelectedTable(null);
     } catch (err) {
       console.error("Error removing booking:", err);
       setMessage(err.response?.data?.message || "Failed to remove booking");
@@ -92,18 +103,22 @@ const AdminDashboard = () => {
         ) : restaurant ? (
           <div className="text-center w-full">
             <div className="w-24 h-24 bg-white/20 rounded-2xl mx-auto mb-4 flex items-center justify-center text-5xl">
-              🍽️
+              <FaChair />
             </div>
             <h2 className="text-2xl font-semibold mb-4 truncate">
               {restaurant.restaurantName}
             </h2>
 
             <div className="bg-white/10 p-6 rounded-2xl text-left space-y-4 shadow-lg">
-              <p>📍 {restaurant.location}</p>
-              <p>
-                🕒 {restaurant.openTime} - {restaurant.closeTime}
+              <p className="flex items-center gap-2">
+                <FaMapMarkerAlt /> {restaurant.location}
               </p>
-              <p>🪑 Total Tables: {restaurant.availableTables}</p>
+              <p className="flex items-center gap-2">
+                <FaClock /> {restaurant.openTime} - {restaurant.closeTime}
+              </p>
+              <p className="flex items-center gap-2">
+                <FaChair /> Total Tables: {restaurant.availableTables}
+              </p>
             </div>
 
             <button
@@ -126,7 +141,7 @@ const AdminDashboard = () => {
             Restaurant Dashboard
           </h1>
 
-          {/* Admin Profile Section */}
+          {/* Admin Profile */}
           <div className="relative">
             <div
               className="flex items-center space-x-3 cursor-pointer"
@@ -187,21 +202,25 @@ const AdminDashboard = () => {
                 {table.isBooked ? (
                   <div className="text-gray-700 text-sm space-y-1 overflow-hidden">
                     <p className="font-semibold">Booked By:</p>
-                    <p>👤 {table.userName}</p>
-                    <p>📞 {table.userPhone}</p>
-                    <p>🕒 {table.reservationTime}</p>
+                    <p className="flex items-center gap-2">
+                      <FaUser /> {table.userName}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <FaPhone /> {table.userPhone}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <FaCalendarTimes /> {table.reservationTime}
+                    </p>
 
                     <button
-                      onClick={() =>
-                        handleRemoveBooking(restaurant._id, table.number)
-                      }
+                      onClick={() => openRemovePopup(table)}
                       className="mt-3 w-full py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
                     >
                       Remove Booking
                     </button>
                   </div>
                 ) : (
-                  <p className="text-gray-700 text-base">Available ✅</p>
+                  <p className="text-gray-700 text-base">Available</p>
                 )}
               </div>
             ))}
@@ -210,6 +229,35 @@ const AdminDashboard = () => {
           <p>No restaurant found.</p>
         )}
       </div>
+
+      {/* ✅ Popup with Blur Background */}
+      {popupVisible && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl w-[90%] max-w-md text-center">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">
+              Remove Booking?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to remove booking for{" "}
+              <strong>Table {selectedTable.number}</strong>?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={confirmRemoveBooking}
+                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              >
+                Yes, Remove
+              </button>
+              <button
+                onClick={() => setPopupVisible(false)}
+                className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

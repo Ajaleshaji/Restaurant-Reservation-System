@@ -29,7 +29,7 @@ const AdminDashboard = () => {
         navigate("/admin/login");
         return;
       }
-      const res = await axios.get("http://localhost:5000/api/auth/me", {
+      const res = await axios.get("https://restaurant-reservation-system-fjmv.onrender.com/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAdmin(res.data);
@@ -46,7 +46,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      const res = await axios.get("http://localhost:5000/api/restaurant/details", {
+      const res = await axios.get("https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/details", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRestaurant(res.data);
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
     if (!selectedTable) return;
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/restaurant/remove-booking/${restaurant._id}/${selectedTable.number}`,
+        `https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/remove-booking/${restaurant._id}/${selectedTable.number}`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

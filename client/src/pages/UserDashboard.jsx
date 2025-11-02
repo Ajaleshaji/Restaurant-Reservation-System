@@ -30,7 +30,7 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/me", {
+        const res = await axios.get("https://restaurant-reservation-system-fjmv.onrender.com/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data);
@@ -45,7 +45,7 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/restaurant/all");
+        const res = await axios.get("https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/all");
         setRestaurants(res.data || []);
       } catch (err) {
         console.error("Error fetching restaurants:", err);
@@ -60,7 +60,7 @@ const UserDashboard = () => {
   const fetchBookings = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/restaurant/mybookings",
+        "https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/mybookings",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -93,7 +93,7 @@ const UserDashboard = () => {
     try {
       const { restaurantId, tableNumber } = selectedTable;
       const res = await axios.post(
-        `http://localhost:5000/api/restaurant/reserve/${restaurantId}`,
+        `https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/reserve/${restaurantId}`,
         {
           tableNumber,
           userName: formData.name,
@@ -110,7 +110,7 @@ const UserDashboard = () => {
       setActiveRestaurant(null);
 
       const updatedRestaurants = await axios.get(
-        "http://localhost:5000/api/restaurant/all"
+        "https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/all"
       );
       setRestaurants(updatedRestaurants.data);
       fetchBookings();
@@ -124,13 +124,13 @@ const UserDashboard = () => {
   const handleCancelReservation = async (bookingId) => {
     try {
       const res = await axios.delete(
-        `http://localhost:5000/api/restaurant/cancel/${bookingId}`,
+        `https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/cancel/${bookingId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessage(res.data.message);
       fetchBookings();
       const updatedRestaurants = await axios.get(
-        "http://localhost:5000/api/restaurant/all"
+        "https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/all"
       );
       setRestaurants(updatedRestaurants.data);
     } catch (err) {

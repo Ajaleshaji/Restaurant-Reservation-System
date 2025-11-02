@@ -15,7 +15,7 @@ const AdminLogin = () => {
     setSuccess("");
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/admin/login", {
+      const res = await axios.post("https://restaurant-reservation-system-fjmv.onrender.com/api/auth/admin/login", {
         email,
         password,
       });

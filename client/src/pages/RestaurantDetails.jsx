@@ -19,7 +19,7 @@ const RestaurantDetails = () => {
       if (!token) return;
 
       try {
-        const res = await axios.get("http://localhost:5000/api/restaurant/details", {
+        const res = await axios.get("https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/details", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -50,7 +50,7 @@ const RestaurantDetails = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/restaurant/details",
+        "https://restaurant-reservation-system-fjmv.onrender.com/api/restaurant/details",
         { restaurantName, location, openTime, closeTime, availableTables },
         { headers: { Authorization: `Bearer ${token}` } }
       );

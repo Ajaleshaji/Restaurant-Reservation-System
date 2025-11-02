@@ -16,7 +16,7 @@ const UserSignup = () => {
     setError("");
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/user/signup", {
+      const res = await axios.post("https://restaurant-reservation-system-fjmv.onrender.com/api/auth/user/signup", {
         name,
         email,
         password,

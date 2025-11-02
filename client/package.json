@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
      "start": "react-scripts start",
-  "build": "react-scripts build",
+     "build": "react-scripts build",
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",

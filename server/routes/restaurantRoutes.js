@@ -149,9 +149,11 @@ router.post("/reserve/:id", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Missing reservation details" });
     }
 
-    const restaurant = await Restaurant.findById(restaurantId);
+    // ✅ Fetch user (to get their email)
     const user = await User.findById(userId);
-    console.log(user)
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const restaurant = await Restaurant.findById(restaurantId);
     if (!restaurant)
       return res.status(404).json({ message: "Restaurant not found" });
 
@@ -172,9 +174,9 @@ router.post("/reserve/:id", verifyToken, async (req, res) => {
     restaurant.tables[tableIndex].userPhone = userPhone;
     restaurant.tables[tableIndex].reservationTime = reservationTime;
 
-    console.log("📝 Booking table:", restaurant);
-
     await restaurant.save();
+
+    // ✅ Send email to the *logged-in user’s email*
     await sendMail(user, tableNumber, userName, userPhone, reservationTime, restaurant);
 
     res.status(200).json({ message: "✅ Table reserved successfully!" });
@@ -183,6 +185,7 @@ router.post("/reserve/:id", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 });
+
 
 /* ------------------------------------------------------------
    ✅ Get User’s Bookings

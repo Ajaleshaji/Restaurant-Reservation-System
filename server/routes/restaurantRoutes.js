@@ -101,36 +101,19 @@ router.get("/all", async (req, res) => {
 
 async function sendMail(user, tableNumber, userName, userPhone, reservationTime, restaurant) {
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.resend.com",
+    port: 587,
+    secure: false,
     auth: {
-      user: "oone03066@gmail.com", // Your Gmail
-      pass: "kjsljrpmobqeqytv",    // App password
+      user: "resend",
+      pass: process.env.RESEND_API_KEY,
     },
   });
 
   const mailOptions = {
-    from: `"Reservations" <oone03066@gmail.com>`,
+    from: `"Reservations" <reservations@yourdomain.com>`,
     to: user.email,
     subject: "🍽️ Your Table Reservation is Confirmed!",
-    text: `
-Hi ${userName},
-
-Your reservation at our restaurant has been successfully confirmed! 🎉
-
-📋 Reservation Details:
-- Restaurant: ${restaurant.restaurantName}
-- Location: ${restaurant.location}
-- Table Number: ${tableNumber}
-- Name: ${userName}
-- Phone: ${userPhone}
-- Reservation Time: ${reservationTime}
-
-We look forward to serving you and hope you have a wonderful dining experience.
-
-Warm regards,  
-Team Restaurant management  
-📧 oone03066@gmail.com
-    `,
     html: `
       <div style="font-family: Arial, sans-serif; color: #333; padding: 15px;">
         <h2 style="color: #2e86de;">🍽️ Reservation Confirmed!</h2>
@@ -138,7 +121,7 @@ Team Restaurant management
         <p>Your table reservation has been <b>successfully confirmed</b>!</p>
         <table style="border-collapse: collapse; margin: 10px 0;">
           <tr><td>🍽️ <b>Restaurant:</b></td><td>${restaurant.restaurantName}</td></tr>
-          <tr><td>📍 <b>Restaurant:</b></td><td>${restaurant.location}</td></tr>
+          <tr><td>📍 <b>Location:</b></td><td>${restaurant.location}</td></tr>
           <tr><td>📋 <b>Table Number:</b></td><td>${tableNumber}</td></tr>
           <tr><td>👤 <b>Name:</b></td><td>${userName}</td></tr>
           <tr><td>📞 <b>Phone:</b></td><td>${userPhone}</td></tr>
@@ -147,8 +130,8 @@ Team Restaurant management
         <p>We look forward to serving you. Have a great time!</p>
         <br/>
         <p style="font-size: 13px; color: #888;">
-          — Team Restaurant management<br/>
-          📧 oone03066@gmail.com
+          — Team Restaurant Management<br/>
+          📧 reservations@yourdomain.com
         </p>
       </div>
     `,

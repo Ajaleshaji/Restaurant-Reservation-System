@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   FaUserCircle,
   FaClipboardList,
@@ -33,6 +34,7 @@ const UserDashboard = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const token = localStorage.getItem("userToken");
+    const navigate = useNavigate();
 
   // ✅ 1. useEffect for Auto-Dismissing Messages
   useEffect(() => {
@@ -164,7 +166,7 @@ const UserDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("userToken");
-    window.location.href = "/login";
+   navigate("/user/login", { replace: true });
   };
 
   // Filter restaurants based on search

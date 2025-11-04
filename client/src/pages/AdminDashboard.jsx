@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     setMessage("Logged out successfully. Redirecting...");
-    setTimeout(() => navigate("/admin/login"), 1000);
+    navigate("/admin/login", { replace: true });
   };
 
   // ✅ Fetch Admin Info
